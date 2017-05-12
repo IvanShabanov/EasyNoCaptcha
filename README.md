@@ -3,11 +3,12 @@ Uses
 
 1) Set Captcha
 
-add to start file
+- add Jquery on your page (see https://jquery.com/ )
+- add to start file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 <?php include_once('EasyNoCaptcha.php');?>
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-add before close tag body
+- add before close tag body
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 <?php echo SetEasyNoCaptcha(); ?>
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
