@@ -1,36 +1,71 @@
 <?php
-  function SetEasyNoCaptcha() {
+  @session_start();
+
+  function EncodeJsString($string, $level=0){
+    global $_ENC_string;
+    $i = 0;
+    $result = '';
+    while ($i <= strlen($string)) {
+      $char = substr($string, $i, 1);
+      if (($i > 0) and ($i < strlen($string) - 1)) {
+        if (rand(0,100) < 50) {
+          $d = dechex(ord($char));
+          $c = (strlen($d) == 1) ? '0'.$d : $d;
+          $char = '\x'.$c;
+        } else if (rand(0,100) < 50) {
+          $char = "'+/*".substr(md5(uniqid()) , 0 ,rand(1,32) )."*/'".$char."'+'";
+        }
+      }
+      $i ++;
+      $result .= $char;
+    }
+    return $result;
+  }
+  
+  function SetEasyNoCaptcha($_protect = 3) {
+    global $_ENC_string;
+    $_ENC_string = substr('bf'. base64_encode( md5( uniqid() ) ),0, rand(13,32) );
+    $_ENC_this = substr('bf'. base64_encode( md5( uniqid() ) ),0, rand(13,32) );
+    $_ENC_form = substr('bf'. base64_encode( md5( uniqid() ) ),0, rand(13,32) );
+    $_ENC_l = substr('bf'. base64_encode( md5( uniqid() ) ),0, rand(13,32) );
+    $_ENC_c = substr('bf'. base64_encode( md5( uniqid() ) ),0, rand(13,32) );
+
+    $_ENC_function = 'function';
+
+
     $CODE = substr(md5(uniqid()) , 0 ,rand(10,32) );
     $_SESSION['MYHASH'][$CODE] = substr(md5(uniqid()) , 0 ,rand(10,32) );
-    $_ADDNOCAPTHCA = base64_encode( substr( md5( uniqid() ),0, rand(10,32) ) );   
-    $_SETNOCAPTHCA = base64_encode( substr( md5( uniqid() ),0, rand(10,32) ) );   
-    
-    $result = "".
-    "$(document).ready(function(){".
-      "var l = 0, s = 0, f, ae='appe', ap = 'key', cd='use', sq='ve', hc='hasC', b='bi', ls='lic', ac='addC', cl ='lass', x='nd';".
-      "setTimeout(function(){".
-        "$('form').each(function(){".
-          "f = this;".
-          "if (!$(f)[hc+cl]('".$_ADDNOCAPTHCA."')) {".
-              "$(f)[b+x]('c'+ls+'k '+ap+'do'+'wn '+ap+'up mo'+cd+'en'+'ter'+' '+'mo'+cd+'lea'+sq+' mo'+cd+'mo'+sq+'', function() {".
-                "var t = this;".
-                "var c = 3 + $(t).find('input, textarea, select').length;".
-                "l++;".
-                "if (l > c) {".
-                  "if (!$(t)[hc+cl]('".$_SETNOCAPTHCA."')) {".
-                    "$(t)[ae+x]('<input type=\"hidden\" name=\"HASH\" value=\"".$_SESSION['MYHASH'][$CODE]."\">');".
-                    "$(t)[ae+x]('<input type=\"hidden\" name=\"HASHCODE\" value=\"".$CODE."\">');".
-                    "$(t)[ac+cl]('".$_SETNOCAPTHCA."');".
-                  "};".
-                "};".
-              "});".
-              "$(f)[ac+cl]('".$_ADDNOCAPTHCA."');".
-          "}".
-        "})".
-      "},1000);".
-    "});".
+    $_ADDNOCAPTHCA =  substr( base64_encode( md5( uniqid() ) ),0, rand(10,32) );   
+    $_SETNOCAPTHCA =  substr( base64_encode( md5( uniqid() ) ),0, rand(10,32) );   
+
+    $result = 
+    "$(".EncodeJsString("'document'", 2).")[".EncodeJsString("'ready'",2)."](function(){"."\n".
+      "var ".$_ENC_l." = 0, s = 0, $_ENC_form;"."\n".
+      "setTimeout(".$_ENC_function."(){"."\n".
+        "$(".EncodeJsString("'form'").")[".EncodeJsString("'each'")."](".$_ENC_function."(){"."\n".
+          "".$_ENC_form." = this;"."\n".
+          "if (!$(".$_ENC_form.")[".EncodeJsString("'hasClass'")."]('".$_ADDNOCAPTHCA."')) {"."\n".
+              "$(".$_ENC_form.")[".EncodeJsString("'on'")."](".EncodeJsString("'click keydown keyup mouseenter mouseleave mousemove'").", function() {"."\n".
+                "var ".$_ENC_this." = this;"."\n".
+                "var ".$_ENC_c." = ".$_protect." + $(".$_ENC_this.")[".EncodeJsString("'find'")."](".EncodeJsString("'input, textarea, select'").")[".EncodeJsString("'length'")."];"."\n".
+                "".$_ENC_l."++;"."\n".
+                "if (".$_ENC_l." > ".$_ENC_c.") {"."\n".
+                  "if (!$(".$_ENC_this.")[".EncodeJsString("'hasClass'")."]('".$_SETNOCAPTHCA."')) {"."\n".
+                    "$(".$_ENC_this.")[".EncodeJsString("'append'")."](".EncodeJsString("'<input type=\"hidden\" name=\"HASH\" value=\"".$_SESSION['MYHASH'][$CODE]."\">'").");"."\n".
+                    "$(".$_ENC_this.")[".EncodeJsString("'append'")."](".EncodeJsString("'<input type=\"hidden\" name=\"HASHCODE\" value=\"".$CODE."\">'").");"."\n".
+                    "$(".$_ENC_this.")[".EncodeJsString("'addClass'")."]('".$_SETNOCAPTHCA."');"."\n".
+                  "};"."\n".
+                "};"."\n".
+              "});"."\n".
+              "$(".$_ENC_form.")[".EncodeJsString("'addClass'")."]('".$_ADDNOCAPTHCA."');"."\n".
+          "}"."\n".
+        "})"."\n".
+      "},1000);"."\n".
+    "});"."\n".
 "";
-    return '<script type="text/javascript">eval(window.atob("'.base64_encode($result).'"));</script>';
+
+    $result = str_replace("\n", '',$result);
+    return '<script type="text/javascript">'.$result.'</script>';
   }
 
   /******************************************************/
@@ -45,3 +80,4 @@
     return $result;
     
   }
+?>
