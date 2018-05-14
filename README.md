@@ -8,6 +8,10 @@ Uses
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 <?php include_once('EasyNoCaptcha.php');?>
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- If use Google reCaptcha
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+<?php AddGoogleRecaptcha("key", "secret_key");?>
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 - add before close tag body
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 <?php echo SetEasyNoCaptcha(); ?>
