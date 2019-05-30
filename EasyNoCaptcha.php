@@ -118,7 +118,7 @@
         "$(".EncodeJsString("'".$_form."'").")[".EncodeJsString("'each'")."](".$_ENC_function."(){"."\n".
           "".$_ENC_form." = this;"."\n".
           "if(!$(".$_ENC_form.")[".EncodeJsString("'hasClass'")."]('".$_ADDNOCAPTHCA."')){"."\n".
-              "$(".$_ENC_form.")[".EncodeJsString("'on'")."](".EncodeJsString("'click keydown keyup mouseenter mouseleave mousemove'").",function(){"."\n".
+              "$(".$_ENC_form.")[".EncodeJsString("'on'")."](".EncodeJsString("'click touchstart touchmove touchend keydown keyup mouseenter mouseleave mousemove'").",function(){"."\n".
                 "var ".$_ENC_this." = this;"."\n".
                 "var ".$_ENC_c." = ".$_protect." * $(".$_ENC_this.")[".EncodeJsString("'find'")."](".EncodeJsString("'input, textarea, select'").")[".EncodeJsString("'length'")."];"."\n".
                 "".$_ENC_l."++;"."\n".
