@@ -1,5 +1,4 @@
 <?php
-error_reporting(E_ALL);
 @session_start();
 if (!class_exists('ENCv2')) {
     class ENCv2  {
