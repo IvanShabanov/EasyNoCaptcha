@@ -1,7 +1,6 @@
 <?php include_once('EasyNoCaptcha.php');?>
 <?
 $ENC = new ENCv2;
-$ENC->AddGoogleRecaptcha('6LdUKekaAAAAAIK_iS4Wdzg-59tI53WRjJWTYEQV', '6LdUKekaAAAAAO0xr-cSRETvHt3U55QJAHzs4iQX');
 ?>
 <!DOCTYPE html>
 <html>
