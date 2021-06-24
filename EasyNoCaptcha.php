@@ -151,12 +151,11 @@ if (!class_exists('ENCv2')) {
                         '.$T['script1'].'["src"] = \'https://www.google.com/recaptcha/api.js?render='.$this->_ENC_GoogleRecaptcha_key.'\';
                         '.$T['document1'].'["getElementsByTagName"]("head")[0].appendChild('.$T['script1'].');
                         const '.$T['forms1'].' = '.$T['document1'].'["querySelectorAll"]( "'.$_form.'" );
-                        '.$T['forms1'].'["forEach"](function('.$T['form2'].') {
-                            '.$T['form2'].'["addEventListener"]("submit", function(event) {
-                                event["preventDefault"]();
+                        setTimeout(function() {
+                            '.$T['forms1'].'["forEach"](function('.$T['form2'].') {
                                 '.$T['ENC_GR_Submit'].'('.$T['form2'].')
                             });
-                        });
+                        }, 1000);
                     };
                     function '.$T['ENC_GR_Submit'].'('.$T['form1'].') {
                         let '.$T['grecaptcha'].' = grecaptcha;
@@ -174,7 +173,6 @@ if (!class_exists('ENCv2')) {
                                 '.$T['GR_action'].'["value"] = "'.$GoogleRecaptcha_Action.'";
                                 '.$T['form1'].'["appendChild"]('.$T['GR'].');
                                 '.$T['form1'].'["appendChild"]('.$T['GR_action'].');
-                                '.$T['form1'].'["submit"]();
                             });;
                         });
                     };
