@@ -121,8 +121,8 @@ if (!class_exists('ENCv2')) {
 
             $this->AddCryptWord('ENC_initGR');
             $this->_ENC_AllReadyFunc[] = $this->_ENC_string['ENC_initGR'];
-            $this->AddCryptWord('ENC_GR_Submit');
-            $this->_ENC_AllReadyFunc[] = $this->_ENC_string['ENC_GR_Submit'];
+            $this->AddCryptWord('ENC_GR_Set');
+            $this->_ENC_AllReadyFunc[] = $this->_ENC_string['ENC_GR_Set'];
             $this->AddCryptWord('ENC_check');
             $this->_ENC_AllReadyFunc[] = $this->_ENC_string['ENC_check'];
             $this->AddCryptWord('ENC_InitENC');
@@ -139,42 +139,58 @@ if (!class_exists('ENCv2')) {
             $this->AddCryptWord('grecaptcha');
             $this->AddCryptWord('document1');
             $this->AddCryptWord('document2');
+            $this->AddCryptWord('GR_checked');
+            $this->AddCryptWord('GR_add_script');
+            $this->AddCryptWord('GR_need_add_script');
+            $this->AddCryptWord('MutationObserver');
             $T = $this->_ENC_string;
 
             if (($this->_ENC_GoogleRecaptcha_key != '') && ($this->_ENC_GoogleRecaptcha_SecretKey != '')) {
                 $GoogleRecaptcha_Action =  substr( base64_encode( md5( uniqid() ) ),0, rand(10,32) );
                 $GoogleRecaptcha_Code = '
+                    let '.$T['GR_need_add_script'].'=1;
+                    function '.$T['GR_add_script'].'() {
+                        if ('.$T['GR_need_add_script'].') {
+                            let '.$T['document1'].' = document;
+                            let '.$T['script1'].' = '.$T['document1'].'["createElement"]("script");
+                            '.$T['script1'].'["type"] = \'text/javascript\';
+                            '.$T['script1'].'["src"] = \'https://www.google.com/recaptcha/api.js?render='.$this->_ENC_GoogleRecaptcha_key.'\';
+                            '.$T['document1'].'["getElementsByTagName"]("head")[0].appendChild('.$T['script1'].');
+                            '.$T['GR_need_add_script'].'=0;
+                        };
+                    };
                     function '.$T['ENC_initGR'].'() {
                         let '.$T['document1'].' = document;
-                        let '.$T['script1'].' = '.$T['document1'].'["createElement"]("script");
-                        '.$T['script1'].'["type"] = \'text/javascript\';
-                        '.$T['script1'].'["src"] = \'https://www.google.com/recaptcha/api.js?render='.$this->_ENC_GoogleRecaptcha_key.'\';
-                        '.$T['document1'].'["getElementsByTagName"]("head")[0].appendChild('.$T['script1'].');
-                        const '.$T['forms1'].' = '.$T['document1'].'["querySelectorAll"]( "'.$_form.'" );
+                        '.$T['GR_add_script'].'();
+                        const '.$T['forms1'].' = '.$T['document1'].'["querySelectorAll"]( "'.$_form.':not(.'.$T['GR_checked'].')" );
                         setTimeout(function() {
                             '.$T['forms1'].'["forEach"](function('.$T['form2'].') {
-                                '.$T['ENC_GR_Submit'].'('.$T['form2'].')
+                                '.$T['ENC_GR_Set'].'('.$T['form2'].');
+                                '.$T['form2'].'["classList"]["add"]("'.$T['GR_checked'].'");
                             });
                         }, 1000);
                     };
-                    function '.$T['ENC_GR_Submit'].'('.$T['form1'].') {
-                        let '.$T['grecaptcha'].' = grecaptcha;
-                        '.$T['grecaptcha'].'["ready"](function() {
-                            '.$T['grecaptcha'].'["execute"]("'.$this->_ENC_GoogleRecaptcha_key.'", {action: "'.$GoogleRecaptcha_Action.'"})
-                            .then(function(token) {
-                                let d = document;
-                                let '.$T['GR'].' = d["createElement"]("input");
-                                let '.$T['GR_action'].' = d["createElement"]("input");
-                                '.$T['GR'].'["type"] = "hidden";
-                                '.$T['GR'].'["name"] = "gresponse";
-                                '.$T['GR'].'["value"] = token;
-                                '.$T['GR_action'].'["type"] = "hidden";
-                                '.$T['GR_action'].'["name"] = "gaction";
-                                '.$T['GR_action'].'["value"] = "'.$GoogleRecaptcha_Action.'";
-                                '.$T['form1'].'["appendChild"]('.$T['GR'].');
-                                '.$T['form1'].'["appendChild"]('.$T['GR_action'].');
-                            });;
-                        });
+                    function '.$T['ENC_GR_Set'].'('.$T['form1'].') {
+                        if (!'.$T['form1'].'["classList"]["contains"]("'.$T['GR_checked'].'")) {
+                            '.$T['form1'].'["classList"]["add"]("'.$T['GR_checked'].'");
+                            let '.$T['grecaptcha'].' = grecaptcha;
+                            '.$T['grecaptcha'].'["ready"](function() {
+                                '.$T['grecaptcha'].'["execute"]("'.$this->_ENC_GoogleRecaptcha_key.'", {action: "'.$GoogleRecaptcha_Action.'"})
+                                .then(function(token) {
+                                    let d = document;
+                                    let '.$T['GR'].' = d["createElement"]("input");
+                                    let '.$T['GR_action'].' = d["createElement"]("input");
+                                    '.$T['GR'].'["type"] = "hidden";
+                                    '.$T['GR'].'["name"] = "gresponse";
+                                    '.$T['GR'].'["value"] = token;
+                                    '.$T['GR_action'].'["type"] = "hidden";
+                                    '.$T['GR_action'].'["name"] = "gaction";
+                                    '.$T['GR_action'].'["value"] = "'.$GoogleRecaptcha_Action.'";
+                                    '.$T['form1'].'["appendChild"]('.$T['GR'].');
+                                    '.$T['form1'].'["appendChild"]('.$T['GR_action'].');
+                                });;
+                            });
+                        };
                     };
                 ';
                 $GoogleRecaptcha_Init = $T['ENC_initGR'].'();';
@@ -230,7 +246,12 @@ if (!class_exists('ENCv2')) {
                     '
                     setTimeout(function() {
                         '.$T['ENC_InitENC'].'();
+                        const MutationObserver    = window.MutationObserver;
+                        const '.$T['MutationObserver'].' = new MutationObserver('.$T['ENC_InitENC'].');
+                        '.$T['MutationObserver'].'["observe"]('.$T['document2'].'["querySelectorAll"]("body")[0],{childList:true,characterData:true,attributes:true,subtree:true});
+
                     }, 1000);
+
                 });
             ';
 
@@ -253,6 +274,7 @@ if (!class_exists('ENCv2')) {
                     $result .= trim($r);
                 };
             };
+
             $result = '<script type="text/javascript">'.$result.'</script>';
 
 
