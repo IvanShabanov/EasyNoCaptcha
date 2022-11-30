@@ -1,22 +1,26 @@
 <?php
 @session_start();
-if (!class_exists('ENCv2')) {
-	class ENCv2
+if (!class_exists('ENCv3')) {
+	class ENCv3
 	{
 		private $_ENC_shuffle = [];
 		private $_ENC_AllReadyFunc = [];
 		private $_ENC_string = [];
 		private $curArray = array();
 		private $_ENC_setting = [];
+		private $_ENC_script = [];
 
 		function __construct(array $setting)
 		{
 			$this->_ENC_setting = [
 				'encode' => true,
-				'onlyRecaptcha' => false,
+				'checkDefault' => true,
 				'checkIP' => true,
+				'ReturnPureJS' => false,
 				'Recaptcha_key' => '',
 				'Recaptcha_SecretKey' => '',
+				'hCaptcha_key' => '',
+				'hCaptcha_SecretKey' => '',
 				'script_attributes' => '',
 			];
 			if (count($setting) > 0) {
@@ -34,7 +38,7 @@ if (!class_exists('ENCv2')) {
 				'REFERER' => $_SERVER['HTTP_REFERER']
 			];
 
-			if (!$this->_ENC_setting['onlyRecaptcha']) {
+			if ($this->_ENC_setting['checkDefault']) {
 				if (is_array($_SESSION['MYHASH'])) {
 					foreach ($_SESSION['MYHASH'] as $key => $val) {
 						if (isset($_SESSION['MYHASH'][$key]['DATE'])) {
@@ -127,6 +131,12 @@ if (!class_exists('ENCv2')) {
 			$this->_ENC_setting['Recaptcha_SecretKey'] = $secret;
 		}
 		/**********************/
+		function AddHCaptcha($key, $secret)
+		{
+			$this->_ENC_setting['hCaptcha_key'] = $key;
+			$this->_ENC_setting['hCaptcha_SecretKey'] = $secret;
+		}
+		/**********************/
 		function AddCryptWord($str)
 		{
 			$val = $str;
@@ -141,6 +151,11 @@ if (!class_exists('ENCv2')) {
 			$this->_ENC_string[$str] = $val;
 		}
 		/**********************/
+		function getCryptWord($str)
+		{
+			return $this->_ENC_string[$str];
+		}
+		/**********************/
 		function str_replace_once($search, $replace, $text)
 		{
 			$pos = strpos($text, $search);
@@ -151,7 +166,7 @@ if (!class_exists('ENCv2')) {
 		{
 			$HASHCODE = substr(md5(uniqid()), 0, rand(10, 32));
 			$HASH = substr(md5(uniqid()), 0, rand(10, 32));
-			if ($this->_ENC_setting['onlyRecaptcha']) {
+			if (!$this->_ENC_setting['checkDefault']) {
 				$HASHCODE = md5('HASHCODE');
 				$HASH = md5('HASH');
 			};
@@ -166,14 +181,10 @@ if (!class_exists('ENCv2')) {
 
 			$this->AddCryptWord('HASHCODE');
 			$this->AddCryptWord('HASH');
-			$this->AddCryptWord('GR');
-			$this->AddCryptWord('GR_action');
+
 			$this->AddCryptWord('chechsum');
 
-			$this->AddCryptWord('ENC_initGR');
-			$this->_ENC_AllReadyFunc[] = $this->_ENC_string['ENC_initGR'];
-			$this->AddCryptWord('ENC_GR_Set');
-			$this->_ENC_AllReadyFunc[] = $this->_ENC_string['ENC_GR_Set'];
+
 			$this->AddCryptWord('ENC_check');
 			$this->_ENC_AllReadyFunc[] = $this->_ENC_string['ENC_check'];
 			$this->AddCryptWord('ENC_InitENC');
@@ -188,100 +199,27 @@ if (!class_exists('ENCv2')) {
 			$this->AddCryptWord('forms1');
 			$this->AddCryptWord('forms2');
 			$this->AddCryptWord('forms3');
-			$this->AddCryptWord('grecaptcha');
+
 			$this->AddCryptWord('document1');
 			$this->AddCryptWord('document2');
-			$this->AddCryptWord('GR_checked');
-			$this->AddCryptWord('GR_add_script');
-			$this->AddCryptWord('GR_need_add_script');
+
 			$this->AddCryptWord('MutationObserver');
-			$this->AddCryptWord('mouseX');
-			$this->AddCryptWord('mouseY');
-			$this->AddCryptWord('startTime');
-			$this->AddCryptWord('posX');
-			$this->AddCryptWord('posY');
-			$this->AddCryptWord('curTime');
-			$this->AddCryptWord('mouseSpeed');
 			$this->AddCryptWord('event');
-			$T = $this->_ENC_string;
+
 
 			if (($this->_ENC_setting['Recaptcha_key'] != '') && ($this->_ENC_setting['Recaptcha_SecretKey'] != '')) {
-				$GoogleRecaptcha_Action =  substr(base64_encode(md5(uniqid())), 0, rand(10, 32));
-				$GoogleRecaptcha_Code = '
-					let ' . $T['GR_need_add_script'] . '=1;
-					function ' . $T['GR_add_script'] . '() {
-						if (' . $T['GR_need_add_script'] . ') {
-							let ' . $T['document1'] . ' = document;
-							let ' . $T['script1'] . ' = ' . $T['document1'] . '["createElement"]("script");
-							' . $T['script1'] . '["type"] = \'text/javascript\';
-							' . $T['script1'] . '["src"] = \'https://www.google.com/recaptcha/api.js?render=' . $this->_ENC_setting['Recaptcha_key'] . '\';
-							' . $T['document1'] . '["getElementsByTagName"]("head")[0].appendChild(' . $T['script1'] . ');
-							' . $T['GR_need_add_script'] . '=0;
-						};
-					};
-					function ' . $T['ENC_initGR'] . '() {
-						let ' . $T['document1'] . ' = document;
-						' . $T['GR_add_script'] . '();
-						const ' . $T['forms1'] . ' = ' . $T['document1'] . '["querySelectorAll"]( "' . $_form . ':not(.' . $T['GR_checked'] . ')" );
-						setTimeout(function() {
-							' . $T['forms1'] . '["forEach"](function(' . $T['form2'] . ') {
-								' . $T['ENC_GR_Set'] . '(' . $T['form2'] . ');
-								' . $T['form2'] . '["classList"]["add"]("' . $T['GR_checked'] . '");
-							});
-						}, 1000);
-					};
-					function ' . $T['ENC_GR_Set'] . '(' . $T['form1'] . ') {
-						if (!' . $T['form1'] . '["classList"]["contains"]("' . $T['GR_checked'] . '")) {
-							' . $T['form1'] . '["classList"]["add"]("' . $T['GR_checked'] . '");
-							let ' . $T['grecaptcha'] . ' = grecaptcha;
-							' . $T['grecaptcha'] . '["ready"](function() {
-								' . $T['grecaptcha'] . '["execute"]("' . $this->_ENC_setting['Recaptcha_key'] . '", {action: "' . $GoogleRecaptcha_Action . '"})
-								.then(function(token) {
-									let d = document;
-									let ' . $T['GR'] . ' = d["createElement"]("input");
-									let ' . $T['GR_action'] . ' = d["createElement"]("input");
-									' . $T['GR'] . '["type"] = "hidden";
-									' . $T['GR'] . '["name"] = "gresponse";
-									' . $T['GR'] . '["value"] = token;
-									' . $T['GR_action'] . '["type"] = "hidden";
-									' . $T['GR_action'] . '["name"] = "gaction";
-									' . $T['GR_action'] . '["value"] = "' . $GoogleRecaptcha_Action . '";
-									' . $T['form1'] . '["appendChild"](' . $T['GR'] . ');
-									' . $T['form1'] . '["appendChild"](' . $T['GR_action'] . ');
-								});;
-							});
-						};
-					};
-				';
-				$GoogleRecaptcha_Init = $T['ENC_initGR'] . '();';
+				$_ENC_script['GC_code'] = $this->SetGoogleReCatcha();
+				$_ENC_script['GC_init'] = $this->getCryptWord('ENC_initGR') . '();';
 			};
+
+			$T = $this->_ENC_string;
 
 
 			$result = '
 				document["addEventListener"]("DOMContentLoaded", function(event) {
 					const ' . $T['document2'] . ' = document;
 					let ' . $T['chechsum'] . ' = 0;
-					let ' . $T['mouseX'] . ' = 0;
-					let ' . $T['mouseY'] . ' = 0;
-					let ' . $T['startTime'] . ' = Date.now();
-					function ' . $T['ENC_check_mousemove'] . '(' . $T['event'] . ') {
-						const ' . $T['curTime'] . ' = Date.now();
-						let ' . $T['mouseSpeed'] . ' = 0;
-						const ' . $T['posX'] . ' = ' . $T['event'] . '["clientX"];
-						const ' . $T['posY'] . ' = ' . $T['event'] . '["clientY"];
-						if (((' . $T['mouseX'] . ' > 0) ||
-								(' . $T['mouseY'] . ' > 0)) &&
-								((' . $T['curTime'] . ' - ' . $T['startTime'] . ') > 0)) {
-							' . $T['mouseSpeed'] . '=Math.sqrt(Math.pow(' . $T['mouseX'] . ' - ' . $T['posX'] . ', 2) + Math.pow(' . $T['mouseY'] . ' - ' . $T['posY'] . ', 2)) / (' . $T['curTime'] . ' - ' . $T['startTime'] . ');
-							if (' . $T['mouseSpeed'] . '>150) {
-								' . $T['chechsum'] . '=' . $T['chechsum'] . '-100;
-							} else {
-								' . $T['ENC_check'] . '();
-							}
-						}
-						' . $T['mouseX'] . ' = ' . $T['posX'] . ';
-						' . $T['mouseY'] . ' = ' . $T['posY'] . ';
-					};
+
 					function ' . $T['ENC_check'] . '() {
 						' . $T['chechsum'] . ' ++;
 						if (' . $T['chechsum'] . ' > ' . $_protect . ') {
@@ -315,21 +253,20 @@ if (!class_exists('ENCv2')) {
 								' . $T['form4'] . '["addEventListener"]("mouseenter", ' . $T['ENC_check'] . ', false);
 								' . $T['form4'] . '["addEventListener"]("keyup", ' . $T['ENC_check'] . ', false);
 								' . $T['form4'] . '["addEventListener"]("mouseleave", ' . $T['ENC_check'] . ', false);
-								' . $T['form4'] . '["addEventListener"]("mousemove", ' . $T['ENC_check_mousemove'] . ', false);
 							};
 						});
 						' .
-				$GoogleRecaptcha_Init .
+						$_ENC_script['GC_init'] .
 				'
 					};
 					' .
-				$GoogleRecaptcha_Code .
+				$_ENC_script['GC_code'] .
 				'
 					setTimeout(function() {
 						' . $T['ENC_InitENC'] . '();
 						const MutationObserver	= window.MutationObserver;
 						const ' . $T['MutationObserver'] . ' = new MutationObserver(' . $T['ENC_InitENC'] . ');
-						' . $T['MutationObserver'] . '["observe"](' . $T['document2'] . '["querySelectorAll"]("body")[0],{childList:true,characterData:true,attributes:true,subtree:true});
+						' . $T['MutationObserver'] . '["observe"](' . $T['document2'] . '["querySelectorAll"]("body")[0],{childList:true,subtree:true});
 
 					}, 1000);
 
@@ -356,60 +293,181 @@ if (!class_exists('ENCv2')) {
 				};
 			};
 
-			$result = '<script type="text/javascript">' . $result . '</script>';
-
-
+			if (!$this->_ENC_setting['ReturnPureJS']) {
+				$result = '<script type="text/javascript">' . $result . '</script>';
+			}
 
 			return $result;
 		}
+		/**********************/
+		function SetGoogleReCatcha()
+		{
 
-		function SetHash() {
+			$this->AddCryptWord('ENC_initGR');
+			$this->_ENC_AllReadyFunc[] = $this->_ENC_string['ENC_initGR'];
+			$this->AddCryptWord('ENC_GR_Set');
+			$this->_ENC_AllReadyFunc[] = $this->_ENC_string['ENC_GR_Set'];
 
+			$this->AddCryptWord('GR');
+			$this->AddCryptWord('GR_action');
+			$this->AddCryptWord('GR_checked');
+			$this->AddCryptWord('GR_add_script');
+			$this->AddCryptWord('GR_need_add_script');
+			$this->AddCryptWord('grecaptcha');
+			$this->AddCryptWord('GoogleRecaptcha_Action');
+
+			$T = $this->_ENC_string;
+			$GoogleRecaptcha_Action =  $T['GoogleRecaptcha_Action'];
+			$result = '
+				let ' . $T['GR_need_add_script'] . '=1;
+				function ' . $T['GR_add_script'] . '() {
+					if (' . $T['GR_need_add_script'] . ') {
+						let ' . $T['document1'] . ' = document;
+						let ' . $T['script1'] . ' = ' . $T['document1'] . '["createElement"]("script");
+						' . $T['script1'] . '["type"] = \'text/javascript\';
+						' . $T['script1'] . '["src"] = \'https://www.google.com/recaptcha/api.js?render=' . $this->_ENC_setting['Recaptcha_key'] . '\';
+						' . $T['document1'] . '["getElementsByTagName"]("head")[0].appendChild(' . $T['script1'] . ');
+						' . $T['GR_need_add_script'] . '=0;
+					};
+				};
+				function ' . $T['ENC_initGR'] . '() {
+					let ' . $T['document1'] . ' = document;
+					' . $T['GR_add_script'] . '();
+					const ' . $T['forms1'] . ' = ' . $T['document1'] . '["querySelectorAll"]( "' . $_form . ':not(.' . $T['GR_checked'] . ')" );
+					setTimeout(function() {
+						' . $T['forms1'] . '["forEach"](function(' . $T['form2'] . ') {
+							' . $T['ENC_GR_Set'] . '(' . $T['form2'] . ');
+							' . $T['form2'] . '["classList"]["add"]("' . $T['GR_checked'] . '");
+						});
+					}, 1000);
+				};
+				function ' . $T['ENC_GR_Set'] . '(' . $T['form1'] . ') {
+					if (!' . $T['form1'] . '["classList"]["contains"]("' . $T['GR_checked'] . '")) {
+						' . $T['form1'] . '["classList"]["add"]("' . $T['GR_checked'] . '");
+						let ' . $T['grecaptcha'] . ' = grecaptcha;
+						' . $T['grecaptcha'] . '["ready"](function() {
+							' . $T['grecaptcha'] . '["execute"]("' . $this->_ENC_setting['Recaptcha_key'] . '", {action: "' . $GoogleRecaptcha_Action . '"})
+							.then(function(token) {
+								let d = document;
+								let ' . $T['GR'] . ' = d["createElement"]("input");
+								let ' . $T['GR_action'] . ' = d["createElement"]("input");
+								' . $T['GR'] . '["type"] = "hidden";
+								' . $T['GR'] . '["name"] = "gresponse";
+								' . $T['GR'] . '["value"] = token;
+								' . $T['GR_action'] . '["type"] = "hidden";
+								' . $T['GR_action'] . '["name"] = "gaction";
+								' . $T['GR_action'] . '["value"] = "' . $GoogleRecaptcha_Action . '";
+								' . $T['form1'] . '["appendChild"](' . $T['GR'] . ');
+								' . $T['form1'] . '["appendChild"](' . $T['GR_action'] . ');
+							});;
+						});
+					};
+				};
+			';
+			return $result;
+		}
+		/**********************/
+		function SetHCatcha($T)
+		{
+
+			$this->AddCryptWord('ENC_initHC');
+			$this->_ENC_AllReadyFunc[] = $this->_ENC_string['ENC_initHC'];
+			$this->AddCryptWord('ENC_HC_Set');
+			$this->_ENC_AllReadyFunc[] = $this->_ENC_string['ENC_HC_Set'];
+
+			$this->AddCryptWord('HC');
+			$this->AddCryptWord('HC_action');
+			$this->AddCryptWord('HC_checked');
+			$this->AddCryptWord('HC_add_script');
+			$this->AddCryptWord('HC_need_add_script');
+			$this->AddCryptWord('HCaptcha');
+			$this->AddCryptWord('btn_submit');
+			$T = $this->_ENC_string;
+			$result = '
+				let ' . $T['HC_need_add_script'] . '=1;
+				function ' . $T['HC_add_script'] . '() {
+					if (' . $T['HC_need_add_script'] . ') {
+						let ' . $T['document1'] . ' = document;
+						let ' . $T['script1'] . ' = ' . $T['document1'] . '["createElement"]("script");
+						' . $T['script1'] . '["type"] = \'text/javascript\';
+						' . $T['script1'] . '["src"] = \'https://www.hCaptcha.com/1/api.js' . $this->_ENC_setting['Recaptcha_key'] . '\';
+						' . $T['document1'] . '["getElementsByTagName"]("head")[0].appendChild(' . $T['script1'] . ');
+						' . $T['HC_need_add_script'] . '=0;
+					};
+				};
+				function ' . $T['ENC_initHC'] . '() {
+					const ' . $T['document1'] . ' = document;
+
+					const ' . $T['forms1'] . ' = ' . $T['document1'] . '["querySelectorAll"]( "' . $_form . ':not(.' . $T['HC_checked'] . ')" );
+					setTimeout(function() {
+						' . $T['forms1'] . '["forEach"](function(' . $T['form2'] . ') {
+							' . $T['ENC_HC_Set'] . '(' . $T['form2'] . ');
+							' . $T['form2'] . '["classList"]["add"]("' . $T['HC_checked'] . '");
+						});
+						' . $T['HC_add_script'] . '();
+					}, 1000);
+				};
+				function ' . $T['ENC_HC_Set'] . '(' . $T['form1'] . ') {
+					if (!' . $T['form1'] . '["classList"]["contains"]("' . $T['HC_checked'] . '")) {
+						' . $T['form1'] . '["classList"]["add"]("' . $T['HC_checked'] . '");
+						let d = document;
+						let ' . $T['HC'] . ' = d["createElement"]("div");
+						' . $T['HC'] . '["setAttribute"]("class", "h-captcha");
+						' . $T['HC'] . '["setAttribute"]("data-sitekey", "' . $this->_ENC_setting['hCaptcha_key'] . '");
+						const ' . $T['btn_submit'] . ' =  ' . $T['form1'] . '["querySelectorAll"](\'input[type="submit"]\');
+						if (' . $T['btn_submit'] . '.length) {
+							' . $T['form1'] . '["insertBefore"](' . $T['HC'] . ', ' . $T['btn_submit'] . '[0]);
+						} else {
+							' . $T['form1'] . '["appendChild"](' . $T['HC'] . ');
+						}
+					};
+				};
+			';
+			return $result;
 		}
 		/**********************/
 		function CheckEasyNoCaptha()
 		{
 			$result = false;
 			if ((isset($_REQUEST['HASHCODE'])) && (isset($_REQUEST['HASH']))) {
-				$result = 	(
-								!$this->_ENC_setting['onlyRecaptcha'] &&
-								$this->CheckHash() &&
-							  	$this->CheckIP()
-							) &&
-							(
-								$this->_ENC_setting['onlyRecaptcha'] ||
-								$this->CheckRecaptcha()
-							)
-							;
+				$result = 	($this->CheckHash() &&
+					$this->CheckIP()
+				) &&
+					($this->_ENC_setting['onlyRecaptcha'] ||
+						$this->CheckRecaptcha()
+					) && ($this->CheckHCaptcha()
+					);
 				if (!$this->_ENC_setting['onlyRecaptcha']) {
 					unset($_SESSION['MYHASH'][$_REQUEST['HASHCODE']]);
 				};
 			};
 			return $result;
 		}
-
+		/**********************/
 		function CheckHash()
 		{
 			$result = true;
-			if (
-				($_REQUEST['HASHCODE'] == '') ||
-				($_REQUEST['HASH'] == '') ||
-				($_SESSION['MYHASH'][$_REQUEST['HASHCODE']]['VALUE'] != $_REQUEST['HASH'])
-			) {
-				$result = false;
+			if ($this->_ENC_setting['checkDefault']) {
+				if (
+					($_REQUEST['HASHCODE'] == '') ||
+					($_REQUEST['HASH'] == '') ||
+					($_SESSION['MYHASH'][$_REQUEST['HASHCODE']]['VALUE'] != $_REQUEST['HASH'])
+				) {
+					$result = false;
+				}
 			}
+
 			return $result;
 		}
-
+		/**********************/
 		function CheckRecaptcha()
 		{
-			$result = true;
+			$result = false;
 			if ($this->_ENC_setting['Recaptcha_key'] == '') {
 				$result = true;
 			} else if ((isset($_REQUEST['gresponse'])) && (isset($_REQUEST['gaction']))) {
 				$gresponse  = $_REQUEST['gresponse'];
 				$gaction  = $_REQUEST['gaction'];
-
 				$ch = curl_init();
 				curl_setopt($ch, CURLOPT_URL, "https://www.google.com/recaptcha/api/siteverify");
 				curl_setopt($ch, CURLOPT_POST, 1);
@@ -418,7 +476,6 @@ if (!class_exists('ENCv2')) {
 				$response = curl_exec($ch);
 				curl_close($ch);
 				$arrResponse = json_decode($response, true);
-
 				$result = false;
 				if (($arrResponse['success'] == 1) && ($arrResponse['action'] == $gaction) && ($arrResponse['score'] > 0.5)) {
 					$result = true;
@@ -426,17 +483,39 @@ if (!class_exists('ENCv2')) {
 			};
 			return $result;
 		}
-
+		/**********************/
+		function CheckHCaptcha()
+		{
+			$result = false;
+			if ($this->_ENC_setting['hCaptcha_key'] == '') {
+				$result = true;
+			} else if (isset($_REQUEST['h-captcha-response'])) {
+				$data = array(
+					'secret' => $this->_ENC_setting['hCaptcha_SecretKey'],
+					'response' => $_REQUEST['h-captcha-response']
+				);
+				$verify = curl_init();
+				curl_setopt($verify, CURLOPT_URL, "https://hcaptcha.com/siteverify");
+				curl_setopt($verify, CURLOPT_POST, true);
+				curl_setopt($verify, CURLOPT_POSTFIELDS, http_build_query($data));
+				curl_setopt($verify, CURLOPT_RETURNTRANSFER, true);
+				$response = curl_exec($verify);
+				$responseData = json_decode($response);
+				if ($responseData->success) {
+					$result = true;
+				};
+			};
+			return $result;
+		}
+		/**********************/
 		function CheckIP()
 		{
 			$result = true;
 			if ($this->_ENC_setting['checkIP']) {
 				$session = $_SESSION['MYHASH'][$_REQUEST['HASHCODE']];
-				if ($session['VALUE'] == $_REQUEST['HASH']) {
-					if ($this->curArray['IP'] != $session['IP']) {
-						/* IP не совпадают */
-						$result = false;
-					};
+				if ($this->curArray['IP'] != $session['IP']) {
+					/* IP не совпадают */
+					$result = false;
 				};
 			};
 
