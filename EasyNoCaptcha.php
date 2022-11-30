@@ -176,8 +176,7 @@ if (!class_exists('ENCv3')) {
 
 			$_InitedForm =  substr(base64_encode(md5(uniqid())), 0, rand(10, 32));
 			$_CheckedForm =  substr(base64_encode(md5(uniqid())), 0, rand(10, 32));
-			$GoogleRecaptcha_Code = '';
-			$GoogleRecaptcha_Init = '';
+
 
 			$this->AddCryptWord('HASHCODE');
 			$this->AddCryptWord('HASH');
@@ -189,8 +188,6 @@ if (!class_exists('ENCv3')) {
 			$this->_ENC_AllReadyFunc[] = $this->_ENC_string['ENC_check'];
 			$this->AddCryptWord('ENC_InitENC');
 			$this->_ENC_AllReadyFunc[] = $this->_ENC_string['ENC_InitENC'];
-			$this->AddCryptWord('ENC_check_mousemove');
-			$this->_ENC_AllReadyFunc[] = $this->_ENC_string['ENC_check_mousemove'];
 			$this->AddCryptWord('form1');
 			$this->AddCryptWord('form2');
 			$this->AddCryptWord('form3');
@@ -206,10 +203,16 @@ if (!class_exists('ENCv3')) {
 			$this->AddCryptWord('MutationObserver');
 			$this->AddCryptWord('event');
 
-
+			$_ENC_script['code'] = '';
+			$_ENC_script['init'] = '';
 			if (($this->_ENC_setting['Recaptcha_key'] != '') && ($this->_ENC_setting['Recaptcha_SecretKey'] != '')) {
-				$_ENC_script['GC_code'] = $this->SetGoogleReCatcha();
-				$_ENC_script['GC_init'] = $this->getCryptWord('ENC_initGR') . '();';
+				$_ENC_script['code'] .= $this->SetGoogleReCaptcha();
+				$_ENC_script['init'] .= $this->getCryptWord('ENC_initGR') . '();';
+			};
+
+			if (($this->_ENC_setting['hCaptcha_key'] != '') && ($this->_ENC_setting['hCaptcha_SecretKey'] != '')) {
+				$_ENC_script['code'] .= $this->SetHCaptcha();
+				$_ENC_script['init'] .= $this->getCryptWord('ENC_initHC') . '();';
 			};
 
 			$T = $this->_ENC_string;
@@ -256,11 +259,11 @@ if (!class_exists('ENCv3')) {
 							};
 						});
 						' .
-						$_ENC_script['GC_init'] .
+						$_ENC_script['init'] .
 				'
 					};
 					' .
-				$_ENC_script['GC_code'] .
+				$_ENC_script['code'] .
 				'
 					setTimeout(function() {
 						' . $T['ENC_InitENC'] . '();
@@ -300,7 +303,7 @@ if (!class_exists('ENCv3')) {
 			return $result;
 		}
 		/**********************/
-		function SetGoogleReCatcha()
+		function SetGoogleReCaptcha()
 		{
 
 			$this->AddCryptWord('ENC_initGR');
@@ -367,7 +370,7 @@ if (!class_exists('ENCv3')) {
 			return $result;
 		}
 		/**********************/
-		function SetHCatcha($T)
+		function SetHCaptcha()
 		{
 
 			$this->AddCryptWord('ENC_initHC');
