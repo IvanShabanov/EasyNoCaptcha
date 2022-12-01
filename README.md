@@ -3,23 +3,32 @@ Uses
 
 1) Set Captcha
 
-- add to start file
+- incclude EasyNoCatptcha to ypur project
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 <?php include_once('EasyNoCaptcha.php');?>
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 - Constructor
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-<?php $ENC = new ENCv2;;?>
+<?php $ENC = new ENCv3();?>
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- If use Google reCaptcha v3 (only v3 !)
+
+- to add Google reCaptcha v3 (only v3 !)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 <?php $ENC->AddGoogleRecaptcha("key", "secret_key");?>
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- to add hCaptcha
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+<?php $ENC->AddHcaptcha("key", "secret_key");?>
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
 - to set on all forms invisible captcha - add before close tag body
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 <?php echo $ENC->SetEasyNoCaptcha(); ?>
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-or
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 <?php echo $ENC->SetEasyNoCaptcha([protection_level], [form_selector]); ?>
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -8,9 +8,8 @@ if (!class_exists('ENCv3')) {
 		private $_ENC_string = [];
 		private $curArray = array();
 		private $_ENC_setting = [];
-		private $_ENC_script = [];
 
-		function __construct(array $setting)
+		function __construct(array $setting = [])
 		{
 			$this->_ENC_setting = [
 				'encode' => true,
@@ -22,7 +21,10 @@ if (!class_exists('ENCv3')) {
 				'hCaptcha_key' => '',
 				'hCaptcha_SecretKey' => '',
 				'script_attributes' => '',
+				'debug' => false,
+				'forms_selector' => 'form'
 			];
+
 			if (count($setting) > 0) {
 				foreach ($setting as $key => $val) {
 					if (isset($this->_ENC_setting[$key])) {
@@ -54,116 +56,13 @@ if (!class_exists('ENCv3')) {
 				}
 			}
 		}
-		/**********************/
-		function AddToShuffle($text)
-		{
-			$this->_ENC_shuffle[] = $text;
-		}
 
 		/**********************/
-		function ShuffleText()
-		{
-			$result = '';
-			foreach ($this->_ENC_shuffle as $t) {
-				if (rand(0, 100) < 50) {
-					$result .= $t;
-				} else {
-					$result = $t . $result;
-				}
-			}
-			return $result;
-		}
+		/* ENC */
 		/**********************/
-		function EncodeJsString($string, $level = 0)
+		public function SetEasyNoCaptcha($_protect = 3, $_form = 'form')
 		{
-
-			$result = '';
-			$needEncode =  $this->_ENC_setting['encode'];
-			if ($level >= 3) {
-				$needEncode = false;
-			}
-			if (!$needEncode) {
-				$result = $string;
-			}
-
-			while ($needEncode) {
-				$needEncode = false;
-				$i = 0;
-				while ($i <= strlen($string)) {
-					$char = substr($string, $i, 1);
-					if (($i > 0) and ($i < strlen($string) - 1)) {
-						if ((rand(0, 100) < 20) || ($char == '<')) {
-							$d = dechex(ord($char));
-							$c = (strlen($d) == 1) ? '0' . $d : $d;
-							$char = '\x' . $c;
-						} else if (rand(0, 100) < 20) {
-							$char = '"+/*' . substr(md5(uniqid()), 0, rand(1, 32)) . '*/"' . $char;
-						} else if (((rand(0, 100) < 20) && ($level < 3)) && (true)) {
-
-							$val = substr('enc' . md5(uniqid()), 0, rand(10, 32));
-							$functionName = substr('enc' . md5(uniqid()), 0, rand(10, 32));
-							if ((is_array($this->_ENC_AllReadyFunc)) && (count($this->_ENC_AllReadyFunc) > 0)) {
-								while (in_array($functionName, $this->_ENC_AllReadyFunc)) {
-									$functionName = substr('bf' . md5(uniqid()), 0, rand(10, 32));
-								};
-							};
-							$this->_ENC_AllReadyFunc[] = $functionName;
-							$c = rand(0, strlen($string) - 2 - $i);
-							if ($c > 0) {
-								$char = substr($string, $i, $c);
-								$i += $c - 1;
-								$functiontext =  'function ' . $functionName . '(){return "' . $this->EncodeJsString($char, $level + 1) . '";};';
-								$char = '"+' . $functionName . '()+"';
-								$this->AddToShuffle($functiontext);
-							};
-						};
-					};
-					$i++;
-					$result .= $char;
-				}
-			}
-			return $result;
-		}
-		/**********************/
-		function AddGoogleRecaptcha($key, $secret)
-		{
-			$this->_ENC_setting['Recaptcha_key'] = $key;
-			$this->_ENC_setting['Recaptcha_SecretKey'] = $secret;
-		}
-		/**********************/
-		function AddHCaptcha($key, $secret)
-		{
-			$this->_ENC_setting['hCaptcha_key'] = $key;
-			$this->_ENC_setting['hCaptcha_SecretKey'] = $secret;
-		}
-		/**********************/
-		function AddCryptWord($str)
-		{
-			$val = $str;
-
-			$val = 't' . substr(md5(uniqid()), 0, rand(10, 32));
-			if ((is_array($this->_ENC_string)) && (count($this->_ENC_string) > 0)) {
-				while (in_array($val, $this->_ENC_string)) {
-					$val = substr(md5(uniqid()), 0, rand(10, 32));
-				};
-			};
-
-			$this->_ENC_string[$str] = $val;
-		}
-		/**********************/
-		function getCryptWord($str)
-		{
-			return $this->_ENC_string[$str];
-		}
-		/**********************/
-		function str_replace_once($search, $replace, $text)
-		{
-			$pos = strpos($text, $search);
-			return $pos !== false ? substr_replace($text, $replace, $pos, strlen($search)) : $text;
-		}
-		/**********************/
-		function SetEasyNoCaptcha($_protect = 30, $_form = 'form')
-		{
+			$this->_ENC_setting['form_selector'] = $_form;
 			$HASHCODE = substr(md5(uniqid()), 0, rand(10, 32));
 			$HASH = substr(md5(uniqid()), 0, rand(10, 32));
 			if (!$this->_ENC_setting['checkDefault']) {
@@ -178,30 +77,30 @@ if (!class_exists('ENCv3')) {
 			$_CheckedForm =  substr(base64_encode(md5(uniqid())), 0, rand(10, 32));
 
 
-			$this->AddCryptWord('HASHCODE');
-			$this->AddCryptWord('HASH');
+			$this->addCryptWord('HASHCODE');
+			$this->addCryptWord('HASH');
 
-			$this->AddCryptWord('chechsum');
+			$this->addCryptWord('chechsum');
 
 
-			$this->AddCryptWord('ENC_check');
+			$this->addCryptWord('ENC_check');
 			$this->_ENC_AllReadyFunc[] = $this->_ENC_string['ENC_check'];
-			$this->AddCryptWord('ENC_InitENC');
+			$this->addCryptWord('ENC_InitENC');
 			$this->_ENC_AllReadyFunc[] = $this->_ENC_string['ENC_InitENC'];
-			$this->AddCryptWord('form1');
-			$this->AddCryptWord('form2');
-			$this->AddCryptWord('form3');
-			$this->AddCryptWord('form4');
-			$this->AddCryptWord('script1');
-			$this->AddCryptWord('forms1');
-			$this->AddCryptWord('forms2');
-			$this->AddCryptWord('forms3');
+			$this->addCryptWord('form1');
+			$this->addCryptWord('form2');
+			$this->addCryptWord('form3');
+			$this->addCryptWord('form4');
+			$this->addCryptWord('script1');
+			$this->addCryptWord('forms1');
+			$this->addCryptWord('forms2');
+			$this->addCryptWord('forms3');
 
-			$this->AddCryptWord('document1');
-			$this->AddCryptWord('document2');
+			$this->addCryptWord('document1');
+			$this->addCryptWord('document2');
 
-			$this->AddCryptWord('MutationObserver');
-			$this->AddCryptWord('event');
+			$this->addCryptWord('ENCMutationObserver');
+			$this->addCryptWord('event');
 
 			$_ENC_script['code'] = '';
 			$_ENC_script['init'] = '';
@@ -268,8 +167,8 @@ if (!class_exists('ENCv3')) {
 					setTimeout(function() {
 						' . $T['ENC_InitENC'] . '();
 						const MutationObserver	= window.MutationObserver;
-						const ' . $T['MutationObserver'] . ' = new MutationObserver(' . $T['ENC_InitENC'] . ');
-						' . $T['MutationObserver'] . '["observe"](' . $T['document2'] . '["querySelectorAll"]("body")[0],{childList:true,subtree:true});
+						const ' . $T['ENCMutationObserver'] . ' = new MutationObserver(' . $T['ENC_InitENC'] . ');
+						' . $T['ENCMutationObserver'] . '["observe"](' . $T['document2'] . '["querySelectorAll"]("body")[0],{childList:true,subtree:true});
 
 					}, 1000);
 
@@ -288,13 +187,15 @@ if (!class_exists('ENCv3')) {
 
 			$this->AddToShuffle($result);
 			$result = $this->ShuffleText();
-			$arResult = explode("\n", $result);
-			if (is_array($arResult)) {
-				$result = '';
-				foreach ($arResult as $r) {
-					$result .= trim($r);
+			if ($this->_ENC_setting['encode']) {
+				$arResult = explode("\n", $result);
+				if (is_array($arResult)) {
+					$result = '';
+					foreach ($arResult as $r) {
+						$result .= trim($r);
+					};
 				};
-			};
+			}
 
 			if (!$this->_ENC_setting['ReturnPureJS']) {
 				$result = '<script type="text/javascript">' . $result . '</script>';
@@ -303,21 +204,79 @@ if (!class_exists('ENCv3')) {
 			return $result;
 		}
 		/**********************/
-		function SetGoogleReCaptcha()
+		public function CheckEasyNoCaptha()
 		{
+			$result = false;
+			if ((isset($_REQUEST['HASHCODE'])) && (isset($_REQUEST['HASH']))) {
+				$result = 	($this->CheckHash() &&
+					$this->CheckIP()
+				) &&
+					($this->_ENC_setting['onlyRecaptcha'] ||
+						$this->CheckRecaptcha()
+					) && ($this->CheckHCaptcha()
+					);
+				if (!$this->_ENC_setting['onlyRecaptcha']) {
+					unset($_SESSION['MYHASH'][$_REQUEST['HASHCODE']]);
+				};
+			};
+			return $result;
+		}
+		/**********************/
+		private function CheckHash()
+		{
+			$result = true;
+			if ($this->_ENC_setting['checkDefault']) {
+				if (
+					($_REQUEST['HASHCODE'] == '') ||
+					($_REQUEST['HASH'] == '') ||
+					($_SESSION['MYHASH'][$_REQUEST['HASHCODE']]['VALUE'] != $_REQUEST['HASH'])
+				) {
+					$result = false;
+				}
+			}
 
-			$this->AddCryptWord('ENC_initGR');
+			return $result;
+		}
+
+		/**********************/
+		private function CheckIP()
+		{
+			$result = true;
+			if ($this->_ENC_setting['checkIP']) {
+				$session = $_SESSION['MYHASH'][$_REQUEST['HASHCODE']];
+				if ($this->curArray['IP'] != $session['IP']) {
+					/* IP не совпадают */
+					$result = false;
+				};
+			};
+			return $result;
+		}
+
+		/**********************/
+		/* ReCaptcha */
+		/**********************/
+
+		public function AddGoogleRecaptcha($key, $secret)
+		{
+			$this->_ENC_setting['Recaptcha_key'] = $key;
+			$this->_ENC_setting['Recaptcha_SecretKey'] = $secret;
+		}
+		/**********************/
+		private function SetGoogleReCaptcha()
+		{
+			$_form = $this->_ENC_setting['form_selector'];
+			$this->addCryptWord('ENC_initGR');
 			$this->_ENC_AllReadyFunc[] = $this->_ENC_string['ENC_initGR'];
-			$this->AddCryptWord('ENC_GR_Set');
+			$this->addCryptWord('ENC_GR_Set');
 			$this->_ENC_AllReadyFunc[] = $this->_ENC_string['ENC_GR_Set'];
 
-			$this->AddCryptWord('GR');
-			$this->AddCryptWord('GR_action');
-			$this->AddCryptWord('GR_checked');
-			$this->AddCryptWord('GR_add_script');
-			$this->AddCryptWord('GR_need_add_script');
-			$this->AddCryptWord('grecaptcha');
-			$this->AddCryptWord('GoogleRecaptcha_Action');
+			$this->addCryptWord('GR');
+			$this->addCryptWord('GR_action');
+			$this->addCryptWord('GR_checked');
+			$this->addCryptWord('GR_add_script');
+			$this->addCryptWord('GR_need_add_script');
+			$this->addCryptWord('grecaptcha');
+			$this->addCryptWord('GoogleRecaptcha_Action');
 
 			$T = $this->_ENC_string;
 			$GoogleRecaptcha_Action =  $T['GoogleRecaptcha_Action'];
@@ -368,23 +327,69 @@ if (!class_exists('ENCv3')) {
 				};
 			';
 			return $result;
+
 		}
+
+
 		/**********************/
-		function SetHCaptcha()
+		private function CheckRecaptcha()
 		{
 
-			$this->AddCryptWord('ENC_initHC');
+			$result = false;
+			if ($this->_ENC_setting['Recaptcha_key'] == '') {
+				$result = true;
+			} else if ((isset($_REQUEST['gresponse'])) && (isset($_REQUEST['gaction']))) {
+				$gresponse  = $_REQUEST['gresponse'];
+				$gaction  = $_REQUEST['gaction'];
+				$ch = curl_init();
+				curl_setopt($ch, CURLOPT_URL, "https://www.google.com/recaptcha/api/siteverify");
+				curl_setopt($ch, CURLOPT_POST, 1);
+				curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query(array('secret' => $this->_ENC_setting['Recaptcha_SecretKey'], 'response' => $gresponse)));
+				curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+				$response = curl_exec($ch);
+				curl_close($ch);
+				$arrResponse = json_decode($response, true);
+				$result = false;
+				if ($this->_ENC_setting['debug']) {
+					echo '<pre>';
+					print_r($arrResponse);
+					echo  '</pre>';
+				}
+				if (($arrResponse['success'] == 1) && ($arrResponse['action'] == $gaction) && ($arrResponse['score'] > 0.5)) {
+					$result = true;
+				};
+
+
+			};
+			return $result;
+		}
+
+
+		/**********************/
+		/* hCaptcha */
+		/**********************/
+
+		public function AddHCaptcha($key, $secret)
+		{
+			$this->_ENC_setting['hCaptcha_key'] = $key;
+			$this->_ENC_setting['hCaptcha_SecretKey'] = $secret;
+		}
+		/**********************/
+		private function SetHCaptcha()
+		{
+			$_form = $this->_ENC_setting['form_selector'];
+			$this->addCryptWord('ENC_initHC');
 			$this->_ENC_AllReadyFunc[] = $this->_ENC_string['ENC_initHC'];
-			$this->AddCryptWord('ENC_HC_Set');
+			$this->addCryptWord('ENC_HC_Set');
 			$this->_ENC_AllReadyFunc[] = $this->_ENC_string['ENC_HC_Set'];
 
-			$this->AddCryptWord('HC');
-			$this->AddCryptWord('HC_action');
-			$this->AddCryptWord('HC_checked');
-			$this->AddCryptWord('HC_add_script');
-			$this->AddCryptWord('HC_need_add_script');
-			$this->AddCryptWord('HCaptcha');
-			$this->AddCryptWord('btn_submit');
+			$this->addCryptWord('HC');
+			$this->addCryptWord('HC_action');
+			$this->addCryptWord('HC_checked');
+			$this->addCryptWord('HC_add_script');
+			$this->addCryptWord('HC_need_add_script');
+			$this->addCryptWord('HCaptcha');
+			$this->addCryptWord('btn_submit');
 			$T = $this->_ENC_string;
 			$result = '
 				let ' . $T['HC_need_add_script'] . '=1;
@@ -402,13 +407,12 @@ if (!class_exists('ENCv3')) {
 					const ' . $T['document1'] . ' = document;
 
 					const ' . $T['forms1'] . ' = ' . $T['document1'] . '["querySelectorAll"]( "' . $_form . ':not(.' . $T['HC_checked'] . ')" );
-					setTimeout(function() {
-						' . $T['forms1'] . '["forEach"](function(' . $T['form2'] . ') {
-							' . $T['ENC_HC_Set'] . '(' . $T['form2'] . ');
-							' . $T['form2'] . '["classList"]["add"]("' . $T['HC_checked'] . '");
-						});
-						' . $T['HC_add_script'] . '();
-					}, 1000);
+
+					' . $T['forms1'] . '["forEach"](function(' . $T['form2'] . ') {
+						' . $T['ENC_HC_Set'] . '(' . $T['form2'] . ');
+						' . $T['form2'] . '["classList"]["add"]("' . $T['HC_checked'] . '");
+					});
+					' . $T['HC_add_script'] . '();
 				};
 				function ' . $T['ENC_HC_Set'] . '(' . $T['form1'] . ') {
 					if (!' . $T['form1'] . '["classList"]["contains"]("' . $T['HC_checked'] . '")) {
@@ -417,78 +421,17 @@ if (!class_exists('ENCv3')) {
 						let ' . $T['HC'] . ' = d["createElement"]("div");
 						' . $T['HC'] . '["setAttribute"]("class", "h-captcha");
 						' . $T['HC'] . '["setAttribute"]("data-sitekey", "' . $this->_ENC_setting['hCaptcha_key'] . '");
-						const ' . $T['btn_submit'] . ' =  ' . $T['form1'] . '["querySelectorAll"](\'input[type="submit"]\');
-						if (' . $T['btn_submit'] . '.length) {
-							' . $T['form1'] . '["insertBefore"](' . $T['HC'] . ', ' . $T['btn_submit'] . '[0]);
-						} else {
-							' . $T['form1'] . '["appendChild"](' . $T['HC'] . ');
-						}
+						' . $T['form1'] . '["appendChild"](' . $T['HC'] . ');
 					};
 				};
 			';
 			return $result;
-		}
-		/**********************/
-		function CheckEasyNoCaptha()
-		{
-			$result = false;
-			if ((isset($_REQUEST['HASHCODE'])) && (isset($_REQUEST['HASH']))) {
-				$result = 	($this->CheckHash() &&
-					$this->CheckIP()
-				) &&
-					($this->_ENC_setting['onlyRecaptcha'] ||
-						$this->CheckRecaptcha()
-					) && ($this->CheckHCaptcha()
-					);
-				if (!$this->_ENC_setting['onlyRecaptcha']) {
-					unset($_SESSION['MYHASH'][$_REQUEST['HASHCODE']]);
-				};
-			};
-			return $result;
-		}
-		/**********************/
-		function CheckHash()
-		{
-			$result = true;
-			if ($this->_ENC_setting['checkDefault']) {
-				if (
-					($_REQUEST['HASHCODE'] == '') ||
-					($_REQUEST['HASH'] == '') ||
-					($_SESSION['MYHASH'][$_REQUEST['HASHCODE']]['VALUE'] != $_REQUEST['HASH'])
-				) {
-					$result = false;
-				}
-			}
 
-			return $result;
 		}
 		/**********************/
-		function CheckRecaptcha()
+		private function CheckHCaptcha()
 		{
-			$result = false;
-			if ($this->_ENC_setting['Recaptcha_key'] == '') {
-				$result = true;
-			} else if ((isset($_REQUEST['gresponse'])) && (isset($_REQUEST['gaction']))) {
-				$gresponse  = $_REQUEST['gresponse'];
-				$gaction  = $_REQUEST['gaction'];
-				$ch = curl_init();
-				curl_setopt($ch, CURLOPT_URL, "https://www.google.com/recaptcha/api/siteverify");
-				curl_setopt($ch, CURLOPT_POST, 1);
-				curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query(array('secret' => $this->_ENC_setting['Recaptcha_SecretKey'], 'response' => $gresponse)));
-				curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-				$response = curl_exec($ch);
-				curl_close($ch);
-				$arrResponse = json_decode($response, true);
-				$result = false;
-				if (($arrResponse['success'] == 1) && ($arrResponse['action'] == $gaction) && ($arrResponse['score'] > 0.5)) {
-					$result = true;
-				};
-			};
-			return $result;
-		}
-		/**********************/
-		function CheckHCaptcha()
-		{
+
 			$result = false;
 			if ($this->_ENC_setting['hCaptcha_key'] == '') {
 				$result = true;
@@ -511,18 +454,105 @@ if (!class_exists('ENCv3')) {
 			return $result;
 		}
 		/**********************/
-		function CheckIP()
+		/* functions */
+		/**********************/
+		private function AddToShuffle($text)
 		{
-			$result = true;
-			if ($this->_ENC_setting['checkIP']) {
-				$session = $_SESSION['MYHASH'][$_REQUEST['HASHCODE']];
-				if ($this->curArray['IP'] != $session['IP']) {
-					/* IP не совпадают */
-					$result = false;
-				};
-			};
+			$this->_ENC_shuffle[] = $text;
+		}
 
+		/**********************/
+		private function ShuffleText()
+		{
+			$result = '';
+			foreach ($this->_ENC_shuffle as $t) {
+				if (rand(0, 100) < 50) {
+					$result .= $t;
+				} else {
+					$result = $t . $result;
+				}
+			}
 			return $result;
 		}
+		/**********************/
+		private function EncodeJsString($string, $level = 0)
+		{
+
+			$result = '';
+			$needEncode =  $this->_ENC_setting['encode'];
+			if ($level >= 3) {
+				$needEncode = false;
+			}
+			if (!$needEncode) {
+				$result = $string;
+			}
+
+			while ($needEncode) {
+				$needEncode = false;
+				$i = 0;
+				while ($i <= strlen($string)) {
+					$char = substr($string, $i, 1);
+					if (($i > 0) and ($i < strlen($string) - 1)) {
+						if ((rand(0, 100) < 20) || ($char == '<')) {
+							$d = dechex(ord($char));
+							$c = (strlen($d) == 1) ? '0' . $d : $d;
+							$char = '\x' . $c;
+						} else if (rand(0, 100) < 20) {
+							$char = '"+/*' . substr(md5(uniqid()), 0, rand(1, 32)) . '*/"' . $char;
+						} else if (((rand(0, 100) < 20) && ($level < 3)) && (true)) {
+
+							$val = substr('enc' . md5(uniqid()), 0, rand(10, 32));
+							$functionName = substr('enc' . md5(uniqid()), 0, rand(10, 32));
+							if ((is_array($this->_ENC_AllReadyFunc)) && (count($this->_ENC_AllReadyFunc) > 0)) {
+								while (in_array($functionName, $this->_ENC_AllReadyFunc)) {
+									$functionName = substr('bf' . md5(uniqid()), 0, rand(10, 32));
+								};
+							};
+							$this->_ENC_AllReadyFunc[] = $functionName;
+							$c = rand(0, strlen($string) - 2 - $i);
+							if ($c > 0) {
+								$char = substr($string, $i, $c);
+								$i += $c - 1;
+								$functiontext =  'function ' . $functionName . '(){return "' . $this->EncodeJsString($char, $level + 1) . '";};';
+								$char = '"+' . $functionName . '()+"';
+								$this->AddToShuffle($functiontext);
+							};
+						};
+					};
+					$i++;
+					$result .= $char;
+				}
+			}
+			return $result;
+		}
+
+
+		/**********************/
+		private function addCryptWord($str)
+		{
+			$val = $str;
+			if ($this->_ENC_setting['encode']) {
+				$val = 't' . substr(md5(uniqid()), 0, rand(10, 32));
+				if ((is_array($this->_ENC_string)) && (count($this->_ENC_string) > 0)) {
+					while (in_array($val, $this->_ENC_string)) {
+						$val = substr(md5(uniqid()), 0, rand(10, 32));
+					};
+				};
+			};
+			$this->_ENC_string[$str] = $val;
+		}
+		/**********************/
+		private function getCryptWord($str)
+		{
+			return $this->_ENC_string[$str];
+		}
+		/**********************/
+		private function str_replace_once($search, $replace, $text)
+		{
+			$pos = strpos($text, $search);
+			return $pos !== false ? substr_replace($text, $replace, $pos, strlen($search)) : $text;
+		}
+
+
 	}
 };
