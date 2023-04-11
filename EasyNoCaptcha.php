@@ -1,7 +1,7 @@
 <?php
 @session_start();
-if (!class_exists('ENCv3')) {
-	class ENCv3
+if (!class_exists('ENCv4')) {
+	class ENCv4
 	{
 		private $_ENC_shuffle = [];
 		private $_ENC_AllReadyFunc = [];
@@ -16,10 +16,12 @@ if (!class_exists('ENCv3')) {
 				'checkDefault' => true,
 				'checkIP' => true,
 				'ReturnPureJS' => false,
-				'Recaptcha_key' => '',
-				'Recaptcha_SecretKey' => '',
+				'GoogleReCaptcha_key' => '',
+				'GoogleRecaptcha_SecretKey' => '',
 				'hCaptcha_key' => '',
 				'hCaptcha_SecretKey' => '',
+				'YandexSmartCaptcha_key' => '',
+				'YandexSmartCaptcha_secretkey' => '',
 				'script_attributes' => '',
 				'debug' => false,
 				'forms_selector' => 'form'
@@ -104,7 +106,7 @@ if (!class_exists('ENCv3')) {
 
 			$_ENC_script['code'] = '';
 			$_ENC_script['init'] = '';
-			if (($this->_ENC_setting['Recaptcha_key'] != '') && ($this->_ENC_setting['Recaptcha_SecretKey'] != '')) {
+			if (($this->_ENC_setting['GoogleReCaptcha_key'] != '') && ($this->_ENC_setting['GoogleRecaptcha_SecretKey'] != '')) {
 				$_ENC_script['code'] .= $this->SetGoogleReCaptcha();
 				$_ENC_script['init'] .= $this->getCryptWord('ENC_initGR') . '();';
 			};
@@ -113,6 +115,13 @@ if (!class_exists('ENCv3')) {
 				$_ENC_script['code'] .= $this->SetHCaptcha();
 				$_ENC_script['init'] .= $this->getCryptWord('ENC_initHC') . '();';
 			};
+
+			if (($this->_ENC_setting['YandexSmartCaptcha_key'] != '') && ($this->_ENC_setting['YandexSmartCaptcha_SecretKey'] != '')) {
+				$_ENC_script['code'] .= $this->SetYandexSmartCaptcha();
+				$_ENC_script['init'] .= $this->getCryptWord('ENC_initYSC') . '();';
+			};
+
+
 
 			$T = $this->_ENC_string;
 
@@ -208,16 +217,18 @@ if (!class_exists('ENCv3')) {
 		{
 			$result = false;
 			if ((isset($_REQUEST['HASHCODE'])) && (isset($_REQUEST['HASH']))) {
-				$result = 	($this->CheckHash() &&
-					$this->CheckIP()
-				) &&
-					($this->_ENC_setting['onlyRecaptcha'] ||
-						$this->CheckRecaptcha()
-					) && ($this->CheckHCaptcha()
+				$result =
+					(
+						$this->CheckHash() &&
+						$this->CheckIP()
+					) && (
+						$this->CheckGoogleRecaptcha()
+					) && (
+						$this->CheckHCaptcha()
+					) && (
+						$this->CheckYandexSmartCaptcha()
 					);
-				if (!$this->_ENC_setting['onlyRecaptcha']) {
-					unset($_SESSION['MYHASH'][$_REQUEST['HASHCODE']]);
-				};
+				unset($_SESSION['MYHASH'][$_REQUEST['HASHCODE']]);
 			};
 			return $result;
 		}
@@ -258,8 +269,8 @@ if (!class_exists('ENCv3')) {
 
 		public function AddGoogleRecaptcha($key, $secret)
 		{
-			$this->_ENC_setting['Recaptcha_key'] = $key;
-			$this->_ENC_setting['Recaptcha_SecretKey'] = $secret;
+			$this->_ENC_setting['GoogleReCaptcha_key'] = $key;
+			$this->_ENC_setting['GoogleRecaptcha_SecretKey'] = $secret;
 		}
 		/**********************/
 		private function SetGoogleReCaptcha()
@@ -287,7 +298,7 @@ if (!class_exists('ENCv3')) {
 						let ' . $T['document1'] . ' = document;
 						let ' . $T['script1'] . ' = ' . $T['document1'] . '["createElement"]("script");
 						' . $T['script1'] . '["type"] = \'text/javascript\';
-						' . $T['script1'] . '["src"] = \'https://www.google.com/recaptcha/api.js?render=' . $this->_ENC_setting['Recaptcha_key'] . '\';
+						' . $T['script1'] . '["src"] = \'https://www.google.com/recaptcha/api.js?render=' . $this->_ENC_setting['GoogleReCaptcha_key'] . '\';
 						' . $T['document1'] . '["getElementsByTagName"]("head")[0].appendChild(' . $T['script1'] . ');
 						' . $T['GR_need_add_script'] . '=0;
 					};
@@ -308,7 +319,7 @@ if (!class_exists('ENCv3')) {
 						' . $T['form1'] . '["classList"]["add"]("' . $T['GR_checked'] . '");
 						let ' . $T['grecaptcha'] . ' = grecaptcha;
 						' . $T['grecaptcha'] . '["ready"](function() {
-							' . $T['grecaptcha'] . '["execute"]("' . $this->_ENC_setting['Recaptcha_key'] . '", {action: "' . $GoogleRecaptcha_Action . '"})
+							' . $T['grecaptcha'] . '["execute"]("' . $this->_ENC_setting['GoogleReCaptcha_key'] . '", {action: "' . $GoogleRecaptcha_Action . '"})
 							.then(function(token) {
 								let d = document;
 								let ' . $T['GR'] . ' = d["createElement"]("input");
@@ -332,11 +343,11 @@ if (!class_exists('ENCv3')) {
 
 
 		/**********************/
-		private function CheckRecaptcha()
+		private function CheckGoogleRecaptcha()
 		{
 
 			$result = false;
-			if ($this->_ENC_setting['Recaptcha_key'] == '') {
+			if ($this->_ENC_setting['GoogleReCaptcha_key'] == '') {
 				$result = true;
 			} else if ((isset($_REQUEST['gresponse'])) && (isset($_REQUEST['gaction']))) {
 				$gresponse  = $_REQUEST['gresponse'];
@@ -344,7 +355,7 @@ if (!class_exists('ENCv3')) {
 				$ch = curl_init();
 				curl_setopt($ch, CURLOPT_URL, "https://www.google.com/recaptcha/api/siteverify");
 				curl_setopt($ch, CURLOPT_POST, 1);
-				curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query(array('secret' => $this->_ENC_setting['Recaptcha_SecretKey'], 'response' => $gresponse)));
+				curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query(array('secret' => $this->_ENC_setting['GoogleRecaptcha_SecretKey'], 'response' => $gresponse)));
 				curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 				$response = curl_exec($ch);
 				curl_close($ch);
@@ -398,7 +409,7 @@ if (!class_exists('ENCv3')) {
 						let ' . $T['document1'] . ' = document;
 						let ' . $T['script1'] . ' = ' . $T['document1'] . '["createElement"]("script");
 						' . $T['script1'] . '["type"] = \'text/javascript\';
-						' . $T['script1'] . '["src"] = \'https://www.hCaptcha.com/1/api.js' . $this->_ENC_setting['Recaptcha_key'] . '\';
+						' . $T['script1'] . '["src"] = \'https://www.hCaptcha.com/1/api.js' . $this->_ENC_setting['GoogleReCaptcha_key'] . '\';
 						' . $T['document1'] . '["getElementsByTagName"]("head")[0].appendChild(' . $T['script1'] . ');
 						' . $T['HC_need_add_script'] . '=0;
 					};
@@ -453,6 +464,123 @@ if (!class_exists('ENCv3')) {
 			};
 			return $result;
 		}
+
+		/**********************/
+		/* YandexSmartCaptcha */
+		/**********************/
+		public function AddYandexSmartCaptcha($key, $secret)
+		{
+			$this->_ENC_setting['YandexSmartCaptcha_key'] = $key;
+			$this->_ENC_setting['YandexSmartCaptcha_SecretKey'] = $secret;
+		}
+		/**********************/
+		private function SetYandexSmartCaptcha()
+		{
+			$_form = $this->_ENC_setting['form_selector'];
+			$this->addCryptWord('ENC_initYSC');
+			$this->_ENC_AllReadyFunc[] = $this->_ENC_string['ENC_initYSC'];
+			$this->addCryptWord('ENC_YSC_Set');
+			$this->_ENC_AllReadyFunc[] = $this->_ENC_string['ENC_YSC_Set'];
+			$this->addCryptWord('ENC_onloadYSC');
+			$this->_ENC_AllReadyFunc[] = $this->_ENC_string['ENC_onloadYSC'];
+
+			$this->addCryptWord('ENC_callbackYSC');
+			$this->_ENC_AllReadyFunc[] = $this->_ENC_string['ENC_callbackYSC'];
+
+
+			$this->addCryptWord('YSC');
+			$this->addCryptWord('YSC_action');
+			$this->addCryptWord('YSC_checked');
+			$this->addCryptWord('YSC_add_script');
+			$this->addCryptWord('YSC_need_add_script');
+			$this->addCryptWord('YSCaptcha');
+
+			$T = $this->_ENC_string;
+
+			$result = '
+				let ' . $T['YSC_need_add_script'] . '=1;
+				function ' . $T['YSC_add_script'] . '() {
+					if (' . $T['YSC_need_add_script'] . ') {
+						let ' . $T['document1'] . ' = document;
+						let ' . $T['script1'] . ' = ' . $T['document1'] . '["createElement"]("script");
+						' . $T['script1'] . '["type"] = \'text/javascript\';
+						' . $T['script1'] . '["src"] = \'https://smartcaptcha.yandexcloud.net/captcha.js?render=onload&onload=' . $T['ENC_onloadYSC'] . '\';
+						' . $T['document1'] . '["getElementsByTagName"]("head")[0].appendChild(' . $T['script1'] . ');
+						' . $T['YSC_need_add_script'] . '=0;
+					};
+				};
+				function ' . $T['ENC_initYSC'] . '() {
+					let ' . $T['document1'] . ' = document;
+					' . $T['YSC_add_script'] . '();
+					const ' . $T['forms1'] . ' = ' . $T['document1'] . '["querySelectorAll"]( "' . $_form . ':not(.' . $T['YSC_checked'] . ')" );
+					setTimeout(function() {
+						' . $T['forms1'] . '["forEach"](function(' . $T['form2'] . ') {
+							' . $T['ENC_YSC_Set'] . '(' . $T['form2'] . ');
+							' . $T['form2'] . '["classList"]["add"]("' . $T['YSC_checked'] . '");
+						});
+					}, 1000);
+				};
+				function ' . $T['ENC_YSC_Set'] . '(' . $T['form1'] . ') {
+					if (!' . $T['form1'] . '["classList"]["contains"]("' . $T['YSC_checked'] . '")) {
+						' . $T['form1'] . '["classList"]["add"]("' . $T['YSC_checked'] . '");
+						let dy = document;
+						let ' . $T['YSC'] . ' = dy["createElement"]("div");
+						' . $T['YSC'] . '["setAttribute"]("id", "smart-captcha");
+						' . $T['form1'] . '["appendChild"](' . $T['YSC'] . ');
+					};
+				};
+				function ' . $T['ENC_onloadYSC']. '() {
+					if (!window.smartCaptcha) {
+						return;
+					}
+					window.smartCaptcha.render("smart-captcha", {
+						sitekey: "' . $this->_ENC_setting['YandexSmartCaptcha_key'] . '",
+						invisible: true,
+						shieldPosition: "top-left",
+						callback: ' . $T['ENC_callbackYSC']. ',
+					});
+				};
+				function ' . $T['ENC_callbackYSC']. '(token) {
+					window.smartCaptcha.execute();
+				}
+			';
+			return $result;
+
+		}
+
+
+		/**********************/
+		private function CheckYandexSmartCaptcha()
+		{
+
+			$result = false;
+			if ($this->_ENC_setting['YandexSmartCaptcha_key'] == '') {
+				$result = true;
+			} else if (isset($_REQUEST['smart-token'])){
+				$smarttoken  = $_REQUEST['smart-token'];
+				$ch = curl_init();
+				curl_setopt($ch, CURLOPT_URL, "https://smartcaptcha.yandexcloud.net/validate");
+				curl_setopt($ch, CURLOPT_POST, 1);
+				curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query(array('secret' => $this->_ENC_setting['YandexSmartCaptcha_SecretKey'], 'IP'=>$this->curArray['IP'],  'token' => $smarttoken)));
+				curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+				$response = curl_exec($ch);
+				curl_close($ch);
+				$arrResponse = json_decode($response, true);
+				$result = false;
+				if ($this->_ENC_setting['debug']) {
+					echo '<pre>';
+					print_r($arrResponse);
+					echo  '</pre>';
+				}
+				if ($arrResponse['status'] == 'ok')  {
+					$result = true;
+				};
+			};
+			return $result;
+		}
+
+
+
 		/**********************/
 		/* functions */
 		/**********************/
