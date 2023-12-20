@@ -504,7 +504,7 @@ if (!class_exists('ENCv4')) {
 						let ' . $T['document1'] . ' = document;
 						let ' . $T['script1'] . ' = ' . $T['document1'] . '["createElement"]("script");
 						' . $T['script1'] . '["type"] = \'text/javascript\';
-						' . $T['script1'] . '["src"] = \'https://smartcaptcha.yandexcloud.net/captcha.js?render=onload&onload=' . $T['ENC_onloadYSC'] . '\';
+						' . $T['script1'] . '["src"] = \'https://captcha-api.yandex.ru/captcha.js?render=onload&onload=' . $T['ENC_onloadYSC'] . '\';
 						' . $T['document1'] . '["getElementsByTagName"]("head")[0].appendChild(' . $T['script1'] . ');
 						' . $T['YSC_need_add_script'] . '=0;
 					};
@@ -518,6 +518,7 @@ if (!class_exists('ENCv4')) {
 							' . $T['ENC_YSC_Set'] . '(' . $T['form2'] . ');
 							' . $T['form2'] . '["classList"]["add"]("' . $T['YSC_checked'] . '");
 						});
+						' . $T['ENC_onloadYSC'] . '();
 					}, 1000);
 				};
 				function ' . $T['ENC_YSC_Set'] . '(' . $T['form1'] . ') {
@@ -525,20 +526,31 @@ if (!class_exists('ENCv4')) {
 						' . $T['form1'] . '["classList"]["add"]("' . $T['YSC_checked'] . '");
 						let dy = document;
 						let ' . $T['YSC'] . ' = dy["createElement"]("div");
-						' . $T['YSC'] . '["setAttribute"]("id", "smart-captcha");
+						' . $T['YSC'] . '["setAttribute"]("class", "smart-captcha");
+						' . $T['YSC'] . '["setAttribute"]("style", "max-width: 300px");
 						' . $T['form1'] . '["appendChild"](' . $T['YSC'] . ');
+
 					};
 				};
 				function ' . $T['ENC_onloadYSC'] . '() {
+					let dyYsc = document;
 					if (!window.smartCaptcha) {
 						return;
 					}
-					window.smartCaptcha.render("smart-captcha", {
-						sitekey: "' . $this->_ENC_setting['YandexSmartCaptcha_key'] . '",
-						invisible: true,
-						shieldPosition: "top-left",
-						callback: ' . $T['ENC_callbackYSC'] . ',
-					});
+					let containers = dyYsc["querySelectorAll"](".smart-captcha:not(.rendered)");
+					if (containers.length > 0) {
+						containers.forEach((cont) => {
+							if (!cont["classList"]["contains"](\'rendered\')) {
+								cont["classList"]["add"](\'rendered\');
+								window.smartCaptcha.render(cont, {
+									sitekey: "' . $this->_ENC_setting['YandexSmartCaptcha_key'] . '",
+									invisible: false,
+									shieldPosition: "top-left",
+									callback: ' . $T['ENC_callbackYSC'] . ',
+								});
+							}
+						});
+					}
 				};
 				function ' . $T['ENC_callbackYSC'] . '(token) {
 					window.smartCaptcha.execute();
@@ -555,7 +567,7 @@ if (!class_exists('ENCv4')) {
 			if (empty($this->_ENC_setting['YandexSmartCaptcha_key'])) {
 				$result = true;
 			} else if (isset($_REQUEST['smart-token'])) {
-				$url = "https://smartcaptcha.yandexcloud.net/validate";
+				$url = "https://captcha-api.yandex.ru/validate";
 				$postdata = [
 					'secret' => $this->_ENC_setting['YandexSmartCaptcha_SecretKey'],
 					'IP' => $this->curArray['IP'],
