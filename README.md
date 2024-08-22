@@ -23,8 +23,13 @@ Uses
 <?php $ENC->AddHcaptcha("key", "secret_key");?>
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+- to add YandexSmartCaptcha
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+<?php $ENC->AddYandexSmartCaptcha("key", "secret_key");?>
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- to set on all forms invisible captcha - add before close tag body
+
+- to set on all forms captcha - add before close tag body
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 <?php echo $ENC->SetEasyNoCaptcha(); ?>
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
