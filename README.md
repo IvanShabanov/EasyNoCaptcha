@@ -10,7 +10,7 @@ Uses
 
 - Constructor
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-<?php $ENC = new ENCv3();?>
+<?php $ENC = new EasyNoCaptcha();?>
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - to add Google reCaptcha v3 (only v3 !)

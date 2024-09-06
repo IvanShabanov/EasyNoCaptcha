@@ -1,7 +1,7 @@
 <?php include_once('EasyNoCaptcha.php');?>
 <?
 
-$ENC = new ENCv3();
+$ENC = new EasyNoCaptcha();
 ?>
 <!DOCTYPE html>
 <html>

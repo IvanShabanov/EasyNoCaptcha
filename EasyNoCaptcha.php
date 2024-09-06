@@ -1,7 +1,7 @@
 <?php
 @session_start();
-if (!class_exists('ENCv4')) {
-	class ENCv4
+if (!class_exists('EasyNoCaptcha')) {
+	class EasyNoCaptcha
 	{
 		private $_ENC_shuffle = [];
 		private $_ENC_AllReadyFunc = [];
@@ -26,7 +26,8 @@ if (!class_exists('ENCv4')) {
 				'debug' => false,
 				'debug_to_file' => true,
 				'debug_to_global_array' => false,
-				'forms_selector' => 'form'
+				'forms_selector' => 'form',
+				'InitOnJsEvent' => 'DOMContentLoaded'
 			];
 
 			if (count($setting) > 0) {
@@ -129,11 +130,11 @@ if (!class_exists('ENCv4')) {
 
 
 			$result = '
-				document["addEventListener"]("DOMContentLoaded", function(event) {
+				document["addEventListener"]("'.$this->_ENC_setting['InitOnJsEvent'].'", function(event) {
 					const ' . $T['document2'] . ' = document;
 					let ' . $T['chechsum'] . ' = 0;
 
-					function ' . $T['ENC_check'] . '() {
+					const ' . $T['ENC_check'] . ' = () => {
 						' . $T['chechsum'] . ' ++;
 						if (' . $T['chechsum'] . ' > ' . $_protect . ') {
 							const ' . $T['forms2'] . ' = ' . $T['document2'] . '["querySelectorAll"]( ".' . $_InitedForm . ':not(.' . $_CheckedForm . ')" );
@@ -152,7 +153,7 @@ if (!class_exists('ENCv4')) {
 							});
 						};
 					};
-					function ' . $T['ENC_InitENC'] . '() {
+					const ' . $T['ENC_InitENC'] . ' = () => {
 						const ' . $T['forms3'] . ' =  ' . $T['document2'] . '["querySelectorAll"]("' . $_form . '");
 						' . $T['forms3'] . '["forEach"](function(' . $T['form4'] . ') {
 							if (!' . $T['form4'] . '["classList"]["contains"]("' . $_InitedForm . '")) {
@@ -295,7 +296,7 @@ if (!class_exists('ENCv4')) {
 			$GoogleRecaptcha_Action =  $T['GoogleRecaptcha_Action'];
 			$result = '
 				let ' . $T['GR_need_add_script'] . '=1;
-				function ' . $T['GR_add_script'] . '() {
+				const ' . $T['GR_add_script'] . ' = () => {
 					if (' . $T['GR_need_add_script'] . ') {
 						let ' . $T['document1'] . ' = document;
 						let ' . $T['script1'] . ' = ' . $T['document1'] . '["createElement"]("script");
@@ -305,7 +306,7 @@ if (!class_exists('ENCv4')) {
 						' . $T['GR_need_add_script'] . '=0;
 					};
 				};
-				function ' . $T['ENC_initGR'] . '() {
+				const ' . $T['ENC_initGR'] . ' = () => {
 					let ' . $T['document1'] . ' = document;
 					' . $T['GR_add_script'] . '();
 					const ' . $T['forms1'] . ' = ' . $T['document1'] . '["querySelectorAll"]( "' . $_form . ':not(.' . $T['GR_checked'] . ')" );
@@ -316,7 +317,7 @@ if (!class_exists('ENCv4')) {
 						});
 					}, 1000);
 				};
-				function ' . $T['ENC_GR_Set'] . '(' . $T['form1'] . ') {
+				const ' . $T['ENC_GR_Set'] . ' = (' . $T['form1'] . ') => {
 					if (!' . $T['form1'] . '["classList"]["contains"]("' . $T['GR_checked'] . '")) {
 						' . $T['form1'] . '["classList"]["add"]("' . $T['GR_checked'] . '");
 						let ' . $T['grecaptcha'] . ' = grecaptcha;
@@ -403,7 +404,7 @@ if (!class_exists('ENCv4')) {
 			$T = $this->_ENC_string;
 			$result = '
 				let ' . $T['HC_need_add_script'] . '=1;
-				function ' . $T['HC_add_script'] . '() {
+				const ' . $T['HC_add_script'] . ' = () => {
 					if (' . $T['HC_need_add_script'] . ') {
 						let ' . $T['document1'] . ' = document;
 						let ' . $T['script1'] . ' = ' . $T['document1'] . '["createElement"]("script");
@@ -413,7 +414,7 @@ if (!class_exists('ENCv4')) {
 						' . $T['HC_need_add_script'] . '=0;
 					};
 				};
-				function ' . $T['ENC_initHC'] . '() {
+				const ' . $T['ENC_initHC'] . ' = () => {
 					const ' . $T['document1'] . ' = document;
 
 					const ' . $T['forms1'] . ' = ' . $T['document1'] . '["querySelectorAll"]( "' . $_form . ':not(.' . $T['HC_checked'] . ')" );
@@ -424,7 +425,7 @@ if (!class_exists('ENCv4')) {
 					});
 					' . $T['HC_add_script'] . '();
 				};
-				function ' . $T['ENC_HC_Set'] . '(' . $T['form1'] . ') {
+				const ' . $T['ENC_HC_Set'] . ' = (' . $T['form1'] . ') => {
 					if (!' . $T['form1'] . '["classList"]["contains"]("' . $T['HC_checked'] . '")) {
 						' . $T['form1'] . '["classList"]["add"]("' . $T['HC_checked'] . '");
 						let d = document;
@@ -499,7 +500,7 @@ if (!class_exists('ENCv4')) {
 
 			$result = '
 				let ' . $T['YSC_need_add_script'] . '=1;
-				function ' . $T['YSC_add_script'] . '() {
+				const ' . $T['YSC_add_script'] . ' = () => {
 					if (' . $T['YSC_need_add_script'] . ') {
 						let ' . $T['document1'] . ' = document;
 						let ' . $T['script1'] . ' = ' . $T['document1'] . '["createElement"]("script");
@@ -509,7 +510,7 @@ if (!class_exists('ENCv4')) {
 						' . $T['YSC_need_add_script'] . '=0;
 					};
 				};
-				function ' . $T['ENC_initYSC'] . '() {
+				const ' . $T['ENC_initYSC'] . ' = () => {
 					let ' . $T['document1'] . ' = document;
 					' . $T['YSC_add_script'] . '();
 					const ' . $T['forms1'] . ' = ' . $T['document1'] . '["querySelectorAll"]( "' . $_form . ':not(.' . $T['YSC_checked'] . ')" );
@@ -521,7 +522,7 @@ if (!class_exists('ENCv4')) {
 						' . $T['ENC_onloadYSC'] . '();
 					}, 1000);
 				};
-				function ' . $T['ENC_YSC_Set'] . '(' . $T['form1'] . ') {
+				const ' . $T['ENC_YSC_Set'] . ' = (' . $T['form1'] . ') => {
 					if (!' . $T['form1'] . '["classList"]["contains"]("' . $T['YSC_checked'] . '")) {
 						' . $T['form1'] . '["classList"]["add"]("' . $T['YSC_checked'] . '");
 						let dy = document;
@@ -532,7 +533,7 @@ if (!class_exists('ENCv4')) {
 
 					};
 				};
-				function ' . $T['ENC_onloadYSC'] . '() {
+				const ' . $T['ENC_onloadYSC'] . ' = () => {
 					let dyYsc = document;
 					if (!window.smartCaptcha) {
 						return;
@@ -552,7 +553,7 @@ if (!class_exists('ENCv4')) {
 						});
 					}
 				};
-				function ' . $T['ENC_callbackYSC'] . '(token) {
+				const ' . $T['ENC_callbackYSC'] . ' = (token) => {
 					window.smartCaptcha.execute();
 				}
 			';
