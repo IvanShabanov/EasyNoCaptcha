@@ -12,22 +12,24 @@ if (!class_exists('EasyNoCaptcha')) {
 		function __construct(array $setting = [])
 		{
 			$this->_ENC_setting = [
-				'encode' => true,
-				'checkDefault' => true,
-				'checkIP' => true,
-				'ReturnPureJS' => false,
-				'GoogleReCaptcha_key' => '',
+				'encode' => true,  // Обсуфикация кода
+				'checkDefault' => true,  // Проверять каптчу по дефолту
+				'checkIP' => true,  // Проверяем IP
+				'ReturnPureJS' => false,  // Вернуть чистый JS, без обертки в тег script
+				'GoogleReCaptcha_key' => '',  // GoogleRecaptcha
 				'GoogleRecaptcha_SecretKey' => '',
-				'hCaptcha_key' => '',
+				'hCaptcha_key' => '',  // HCaptcha
 				'hCaptcha_SecretKey' => '',
-				'YandexSmartCaptcha_key' => '',
+				'YandexSmartCaptcha_key' => '', // YandexSmartCaptcha
 				'YandexSmartCaptcha_secretkey' => '',
-				'script_attributes' => '',
-				'debug' => false,
-				'debug_to_file' => true,
-				'debug_to_global_array' => false,
-				'forms_selector' => 'form',
-				'InitOnJsEvent' => 'DOMContentLoaded'
+				'script_attributes' => '',  // - пока нигде не используется
+				'form_selector' => 'form', // CSS селекторр форм
+				'enc_place' => '.enc_place', // CSS селектор элемента в форме куда размещать каптчу
+				'InitOnJsEvent' => 'DOMContentLoaded', // JS event - которое запустит скрипт
+
+				'debug' => false, // Дебаг
+				'debug_to_file' => true, // Записывать лог в файл
+				'debug_to_global_array' => false, // Записывать лог в глобавльный массив
 			];
 
 			if (count($setting) > 0) {
@@ -65,9 +67,12 @@ if (!class_exists('EasyNoCaptcha')) {
 		/**********************/
 		/* ENC */
 		/**********************/
-		public function SetEasyNoCaptcha($_protect = 3, $_form = 'form')
+		public function SetEasyNoCaptcha($_protect = 3, $_form = null)
 		{
-			$this->_ENC_setting['form_selector'] = $_form;
+			$this->_ENC_setting['form_selector'] = !empty($_form) ? $_form : $this->_ENC_setting['form_selector'];
+			if (empty($this->_ENC_setting['form_selector'])) {
+				$this->_ENC_setting['form_selector'] = 'form';
+			}
 			$HASHCODE = substr(md5(uniqid()), 0, rand(10, 32));
 			$HASH = substr(md5(uniqid()), 0, rand(10, 32));
 			if (!$this->_ENC_setting['checkDefault']) {
@@ -401,6 +406,7 @@ if (!class_exists('EasyNoCaptcha')) {
 			$this->addCryptWord('HC_need_add_script');
 			$this->addCryptWord('HCaptcha');
 			$this->addCryptWord('btn_submit');
+			$this->addCryptWord('enc_place');
 			$T = $this->_ENC_string;
 			$result = '
 				let ' . $T['HC_need_add_script'] . '=1;
@@ -429,10 +435,11 @@ if (!class_exists('EasyNoCaptcha')) {
 					if (!' . $T['form1'] . '["classList"]["contains"]("' . $T['HC_checked'] . '")) {
 						' . $T['form1'] . '["classList"]["add"]("' . $T['HC_checked'] . '");
 						let d = document;
+						let ' . $T['enc_place'] . ' = ' . $T['form1'] . '["querySelector"]("' . $this->_ENC_setting['enc_place'] . '") ?? ' . $T['form1'] . ';
 						let ' . $T['HC'] . ' = d["createElement"]("div");
 						' . $T['HC'] . '["setAttribute"]("class", "h-captcha");
 						' . $T['HC'] . '["setAttribute"]("data-sitekey", "' . $this->_ENC_setting['hCaptcha_key'] . '");
-						' . $T['form1'] . '["appendChild"](' . $T['HC'] . ');
+						' . $T['enc_place'] . '["appendChild"](' . $T['HC'] . ');
 					};
 				};
 			';
@@ -526,10 +533,11 @@ if (!class_exists('EasyNoCaptcha')) {
 					if (!' . $T['form1'] . '["classList"]["contains"]("' . $T['YSC_checked'] . '")) {
 						' . $T['form1'] . '["classList"]["add"]("' . $T['YSC_checked'] . '");
 						let dy = document;
+						let ' . $T['enc_place'] . ' = ' . $T['form1'] . '["querySelector"]("' . $this->_ENC_setting['enc_place'] . '") ?? ' . $T['form1'] . ';
 						let ' . $T['YSC'] . ' = dy["createElement"]("div");
 						' . $T['YSC'] . '["setAttribute"]("class", "smart-captcha");
 						' . $T['YSC'] . '["setAttribute"]("style", "max-width: 300px");
-						' . $T['form1'] . '["appendChild"](' . $T['YSC'] . ');
+						' . $T['enc_place'] . '["appendChild"](' . $T['YSC'] . ');
 
 					};
 				};
